@@ -1,4 +1,4 @@
-//! A module that has the [`ActivationFunctions`].
+//! A module that has the [`ActivationFunctions`] and [`LossFunctions`].
 
 /// An enum holding various different activation functions used in machine learning and other applications.
 #[allow(dead_code)]
@@ -69,4 +69,55 @@ impl ActivationFunctions {
             Gaussian => |x| -2.0 * (-(x * x)).exp() * x,
         }
     }
+}
+
+/// An enum having loss (sometimes called cost) functions.
+#[allow(dead_code)]
+#[derive(Default)]
+pub enum LossFunctions {
+    #[default]
+    /// Default value of [`LossFunctions`]. Used to assert a valid function configuration.
+    None,
+    /// The squared error loss (SEL) function. Evaluated as `(x - y)^2`. Its derivative being `2*(x - y)`.
+    SquaredDifference,
+    /// (Unimplemented)
+    CrossEntropy,
+}
+
+/// Useful type alias for the loss functions used throughout the neural network code.
+pub type LossFunction = fn(x: &f64, y: &f64) -> f64;
+
+impl LossFunctions {
+    /// Returns the [`LossFunction`] of the chosen enum variant.
+    pub fn function(&self) -> LossFunction {
+        use LossFunctions::*;
+
+        match self {
+            None => unreachable!(),
+            SquaredDifference => |x, y| (x - y).powi(2),
+            CrossEntropy => unimplemented!(),
+        }
+    }
+
+    /// Returns the derivative [`LossFunction`] of the chosen enum variant.
+    pub fn derivative(&self) -> LossFunction {
+        use LossFunctions::*;
+
+        match self {
+            None => unreachable!(),
+            SquaredDifference => |x, y| 2.0 * (x - y),
+            CrossEntropy => unimplemented!(),
+        }
+    }
+}
+
+/// Returns the sum of applying the `loss` function over the `result` and `expected` slices.
+pub fn total_loss(loss: LossFunction, result: &[f64], expected: &[f64]) -> f64 {
+    assert_eq!(result.len(), expected.len(), "expected equal length slices");
+
+    result
+        .iter()
+        .zip(expected)
+        .map(|(got, want)| loss(got, want))
+        .sum()
 }

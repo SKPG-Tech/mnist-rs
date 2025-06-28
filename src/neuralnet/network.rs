@@ -76,6 +76,7 @@ pub struct NeuralNetworkBuilder {
     output_size: usize,
     normalize_inputs: Option<f64>,
     activations: Option<(ActivationFunctions, ActivationFunctions)>,
+    loss: Option<LossFunctions>,
     batch_size: usize,
     learning_rate: f64,
 }
@@ -132,6 +133,14 @@ impl NeuralNetworkBuilder {
         self
     }
 
+    /// Sets the [`NeuralNetwork::loss`] function.
+    pub fn with_loss(mut self, loss: LossFunctions) -> Self {
+        assert!(self.loss.is_none(), "loss function already set");
+
+        self.loss = Some(loss);
+        self
+    }
+
     /// Sets the [`NeuralNetwork::batch_size`].
     pub fn with_batch_size(mut self, size: usize) -> Self {
         assert_eq!(self.batch_size, 0, "batch size already set");
@@ -176,6 +185,9 @@ impl NeuralNetworkBuilder {
         let Some((neuron_activation, output_activation)) = self.activations else {
             panic!("activation functions have to be set")
         };
+        let Some(loss) = self.loss else {
+            panic!("loss function has to be set")
+        };
 
         NeuralNetwork {
             input_size: self.input_size,
@@ -183,6 +195,7 @@ impl NeuralNetworkBuilder {
             output_layer: Layer::new(self.output_size).initialize(last_size),
             normalize_inputs,
             activations: (neuron_activation, output_activation),
+            loss: loss,
             batch_size: self.batch_size,
             learning_rate: self.learning_rate,
         }
@@ -197,6 +210,7 @@ pub struct NeuralNetwork {
     output_layer: Layer,
     normalize_inputs: (bool, f64),
     activations: (ActivationFunctions, ActivationFunctions),
+    loss: LossFunctions,
     pub batch_size: usize,
     learning_rate: f64,
 }
@@ -243,5 +257,23 @@ impl NeuralNetwork {
         // Perform the last calculation pass on the last evaluated
         // hidden layer activations (or inputs if none), and return them
         self.output_layer.calculate(&values, &output_activation)
+    }
+
+    pub fn backpropagate(&mut self, result: &[f64], expected: &[f64]) {
+        let output_activation_derivative = self.activations.1.derivative();
+        let neuron_activation = self.activations.0.function();
+
+        // Start by evaluating the output layer
+        let mut values = vec![0.0; self.output_layer.size];
+
+        // for index in 0..self.output_layer.size {
+        //     // values[index] = output_activation_derivative(self.output_layer.values[index])
+        //     //     * loss_derivative(&result[index], &expected[index]);
+        // }
+
+        // Propagate backwards ("backpropagate")
+        // for index in (0..self.hidden_layers.len()).rev() {
+        //     for index in 0.. {}
+        // }
     }
 }

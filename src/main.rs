@@ -19,6 +19,7 @@ fn main() {
         .with_hidden_layer_of_size(16)
         .with_output_size(10)
         .with_activations(ActivationFunctions::Sigmoid, ActivationFunctions::Sigmoid)
+        .with_loss(LossFunctions::SquaredDifference)
         .with_batch_size(300)
         .with_learning_rate(0.25)
         .normalize_inputs(255)
